@@ -19,15 +19,18 @@ upper_bound = Q3 + 1.5 * IQR
 
 vehicles_processed = vehicles_df[~((vehicles_df[numeric_cols] < lower_bound) | (vehicles_df[numeric_cols] > upper_bound)).any(axis=1)]
 
+
 st.header('Car Listing Analysis')
 st.write('Comparing the listings of old cars vs new cars')
-#Plot the car age vs price in a scatterplot
-fig_one = px.scatter(vehicles_processed, x='model_year', y='price', title='Car Age vs. Price')
-st.plotly_chart(fig_one)
 
+scatterplot = st.checkbox('Scatterplot')
+histogram = st.checkbox('Histogram')    
 
-#Plot the distribution of car prices in a histogram
-fig_two = px.histogram(vehicles_processed, x='price', title='Distribution of Car Prices')
-st.plotly_chart(fig_two)
-
-
+if scatterplot:
+    st.write('Scatterplot')
+    fig_one = px.scatter(vehicles_processed, x='model_year', y='price', title='Car Age vs. Price')  
+    st.plotly_chart(fig_one)    
+else:
+    st.write('Histogram')
+    fig_two = px.histogram(vehicles_processed, x='price', title='Distribution of Car Prices')
+    
