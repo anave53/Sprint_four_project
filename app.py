@@ -38,4 +38,4 @@ if scatterplot:
 else:
     st.write('Histogram')
     fig_two = px.histogram(vehicles_processed, x='price', title='Distribution of Car Prices')
-    
+    st.plotly_chart(fig_two)    
