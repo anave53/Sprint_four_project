@@ -9,6 +9,8 @@ vehicles_df = pd.read_csv('vehicles_us.csv')
 vehicles_df.dropna()
 
 #Remove outliers
+numeric_cols = vehicles_df.select_dtypes(include=['int64', 'float64']).columns
+
 Q1 = vehicles_df[numeric_cols].quantile(0.25)
 Q3 = vehicles_df[numeric_cols].quantile(0.75)
 IQR = Q3 - Q1
@@ -16,8 +18,11 @@ IQR = Q3 - Q1
 lower_bound = Q1 - 1.5 * IQR
 upper_bound = Q3 + 1.5 * IQR
 
+non_outliers = ((vehicles_df[numeric_cols] >= lower_bound) & (vehicles_df[numeric_cols] <= upper_bound))
 
-vehicles_processed = vehicles_df[~((vehicles_df[numeric_cols] < lower_bound) | (vehicles_df[numeric_cols] > upper_bound)).any(axis=1)]
+vehicles_processed = vehicles_df[non_outliers.all(axis=1)]
+
+print(vehicles_processed)
 
 
 st.header('Car Listing Analysis')
