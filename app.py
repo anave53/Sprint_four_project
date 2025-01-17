@@ -4,27 +4,31 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#Read the dataset and remove missing values
+#Read the dataset and replace missing values
 vehicles_df = pd.read_csv('vehicles_us.csv')
-vehicles_df.dropna()
+
+vehicles_df['model_year'] = vehicles_df.groupby('model')['model_year'].transform(lambda x: x.fillna(x.median()))
+
+vehicles_df['cylinders'] = vehicles_df.groupby('model')['cylinders'].transform(lambda x: x.fillna(x.median()))
+
+def fill_with_median_or_zero(x):
+    if x.dropna().empty:  # Check if the group has no non-NaN values
+        return x.fillna(0)
+    else:
+        return x.fillna(x.median())
+
+vehicles_df['odometer'] = vehicles_df.groupby('model_year')['odometer'].transform(fill_with_median_or_zero)
 
 #Remove outliers
-numeric_cols = vehicles_df.select_dtypes(include=['int64', 'float64']).columns
+def remove_outliers(vehicles_df, column, lower_quantile=0.05, upper_quantile=0.95):
+    lower_bound = vehicles_df[column].quantile(lower_quantile)
+    upper_bound = vehicles_df[column].quantile(upper_quantile)
+    return vehicles_df[(vehicles_df[column] >= lower_bound) & (vehicles_df[column] <= upper_bound)]
 
-Q1 = vehicles_df[numeric_cols].quantile(0.25)
-Q3 = vehicles_df[numeric_cols].quantile(0.75)
-IQR = Q3 - Q1
+vehicles_df = remove_outliers(vehicles_df, 'model_year')
+vehicles_df = remove_outliers(vehicles_df, 'price')
 
-lower_bound = Q1 - 1.5 * IQR
-upper_bound = Q3 + 1.5 * IQR
-
-non_outliers = ((vehicles_df[numeric_cols] >= lower_bound) & (vehicles_df[numeric_cols] <= upper_bound))
-
-vehicles_processed = vehicles_df[non_outliers.all(axis=1)]
-
-print(vehicles_processed)
-
-
+#Now I will create a scatterplot and histogram to visualize the data    
 st.header('Car Listing Analysis')
 st.write('Comparing the listings of old cars vs new cars')
 
@@ -33,9 +37,9 @@ histogram = st.checkbox('Histogram')
 
 if scatterplot:
     st.write('Scatterplot')
-    fig_one = px.scatter(vehicles_processed, x='model_year', y='price', title='Car Age vs. Price')  
+    fig_one = px.scatter(vehicles_df, x='model_year', y='price', title='Car Age vs. Price')  
     st.plotly_chart(fig_one)    
 else:
     st.write('Histogram')
-    fig_two = px.histogram(vehicles_processed, x='price', title='Distribution of Car Prices')
+    fig_two = px.histogram(vehicles_df, x='price', title='Distribution of Car Prices')
     st.plotly_chart(fig_two)    
